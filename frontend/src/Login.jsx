@@ -24,6 +24,7 @@ function Login() {
         const data = await response.json();
         alert('Login successful');
         console.log('Token:', data.token);
+        navigate('/dashboard');
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'An error occurred during login');
@@ -36,7 +37,7 @@ function Login() {
   return (
     <div className="login-container">
       
-      <h1 className="login-title">Login Page</h1>
+      <h1 className="login-title">Login</h1>
       <form onSubmit={handleLogin} className="login-form">
         <input
           type="email"
@@ -55,10 +56,10 @@ function Login() {
           className="input-field"
         />
         <br></br>
+        <button type="submit" className="submit-button">Login</button>
         <Link to="/register">
         <button className="register-button">Register</button>
         </Link>
-        <button type="submit" className="submit-button">Login</button>
         <button className="back-button" onClick={() => navigate(-1)}>Go Back</button>
       </form>
       {error && <p className="error-message">{error}</p>}
