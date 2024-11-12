@@ -24,6 +24,11 @@ function Login() {
         const data = await response.json();
         alert('Login successful');
         console.log('Token:', data.token);
+
+        // 将 token 存储到 localStorage 中
+        localStorage.setItem('token', data.token);
+
+        // 跳转到 Dashboard 页面
         navigate('/dashboard');
       } else {
         const errorData = await response.json();
@@ -36,7 +41,6 @@ function Login() {
 
   return (
     <div className="login-container">
-      
       <h1 className="login-title">Login</h1>
       <form onSubmit={handleLogin} className="login-form">
         <input
@@ -58,9 +62,9 @@ function Login() {
         <br></br>
         <button type="submit" className="submit-button">Login</button>
         <Link to="/register">
-        <button className="register-button">Register</button>
+          <button type="button" className="register-button">Register</button>
         </Link>
-        <button className="back-button" onClick={() => navigate(-1)}>Go Back</button>
+        <button type="button" className="back-button" onClick={() => navigate(-1)}>Go Back</button>
       </form>
       {error && <p className="error-message">{error}</p>}
     </div>

@@ -5,23 +5,58 @@ import './Dashboard.css';
 
 Modal.setAppElement('#root');
 
-function Dashboard() {
+function Dashboard({ slides, setSlides }) {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [slidesName, setslidesName] = useState('');
-  const [slidess, setslidess] = useState([]);
+  const [slidesName, setSlidesName] = useState('');
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const token = localStorage.getItem('token'); 
 
-  useEffect(() => {
-    const savedslidess = JSON.parse(localStorage.getItem('slidess'));
-    if (savedslidess) {
-      setslidess(savedslidess);
+  // Fetch slides data from backend
+  const fetchSlides = async () => {
+    try {
+      const response = await fetch('http://localhost:5005/store', {
+        method: 'GET',
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Access denied. Please check your token.');
+      }
+      const data = await response.json();
+      setSlides(data.store.slides || []);
+    } catch (error) {
+      console.error('Failed to fetch slides:', error);
     }
-  }, []);
+  };
+
+  // Save slides data to backend
+  const saveSlides = async (newSlides) => {
+    try {
+      const response = await fetch('http://localhost:5005/store', {
+        method: 'PUT',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ store: { slides: newSlides } }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Access denied. Please check your token.');
+      }
+    } catch (error) {
+      console.error('Failed to save slides:', error);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem('slidess', JSON.stringify(slidess));
-  }, [slidess]);
+    fetchSlides();
+  }, []);
 
   const openModal = () => {
     setIsModalOpen(true);
@@ -29,26 +64,28 @@ function Dashboard() {
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setslidesName('');
+    setSlidesName('');
   };
 
-  const createslides = () => {
+  const createSlides = () => {
     if (slidesName.trim()) {
-      const newslides = { 
+      const newSlide = { 
         name: slidesName, 
         slides: [{ content: "Empty Slide" }],
         thumbnail: "", 
-        description: "This is a new slides",
+        description: "This is a new slide",
       };
-      setslidess([...slidess, newslides]);
+      const updatedSlides = [...slides, newSlide];
+      setSlides(updatedSlides);
+      saveSlides(updatedSlides);
       closeModal();
     } else {
-      alert('Please enter a slides name');
+      alert('Please enter a slide name');
     }
   };
 
-  const handleslidesClick = (index) => {
-    navigate(`/slides/${index}`);
+  const handleSlideClick = (index) => {
+    navigate(`/edit-slide/${index}`);
   };
 
   const openLogoutModal = () => {
@@ -68,26 +105,27 @@ function Dashboard() {
   return (
     <div>
       <h1>Dashboard</h1>
-      <button onClick={openModal} className="new-slides-button">New slides</button>
+      <button onClick={openModal} className="new-slides-button">New slide</button>
       <button onClick={openLogoutModal} className="logout-button">Logout</button>
 
       <div className="slides-list">
-        {slidess.map((slides, index) => (
+        {slides.map((slide, index) => (
           <div 
             key={index} 
             className="slides-item"
-            onClick={() => handleslidesClick(index)}
+            onClick={() => handleSlideClick(index)}
           >
             <div className="thumbnail">
-              {slides.thumbnail ? (
-                <img src={slides.thumbnail} alt="Thumbnail" />
+              {slide.thumbnail ? (
+                <img src={slide.thumbnail} alt="Thumbnail" />
               ) : (
                 <div className="placeholder"></div>
               )}
             </div>
-            <h3>{slides.name}</h3>
-            <p>{slides.description}</p>
-            <span>{slides.slides.length} slides</span>
+            
+            <h3>{slide.name}</h3>
+            <p>{slide.description}</p>
+            <span>{slide.slides.length} slides</span>
           </div>
         ))}
       </div>
@@ -95,20 +133,19 @@ function Dashboard() {
       <Modal
         isOpen={isModalOpen}
         onRequestClose={closeModal}
-        contentLabel="New slides"
+        contentLabel="New slide"
         className="modal"
         overlayClassName="overlay"
       >
-        <h2>Create New slides</h2>
+        <h2>Create New slide</h2>
         <input
           type="text"
-          placeholder="slides Name"
+          placeholder="Slide Name"
           value={slidesName}
-          onChange={(e) => setslidesName(e.target.value)}
+          onChange={(e) => setSlidesName(e.target.value)}
           required
         />
-        <br></br>
-        <button onClick={createslides} className="create-button">Create</button>
+        <button onClick={createSlides} className="create-button">Create</button>
         <button onClick={closeModal} className="cancel-button">Cancel</button>
       </Modal>
 
