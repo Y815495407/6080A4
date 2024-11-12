@@ -5,21 +5,39 @@ function EditSlides({ slides, setSlides }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const slide = slides[id];
+  const token = localStorage.getItem('token'); 
 
   if (!slide) {
     return <div>Slide not found.</div>;
   }
 
-  // 删除幻灯片
-  const handleDelete = () => {
-    if (window.confirm("您确定吗？")) {
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure?")) {
       const updatedSlides = slides.filter((_, index) => index !== parseInt(id));
       setSlides(updatedSlides);
-      navigate('/dashboard');
+
+      try {
+        const response = await fetch('http://localhost:5005/store', {
+          method: 'PUT',
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ store: { slides: updatedSlides } }),
+        });
+
+        if (response.ok) {
+          navigate('/dashboard');
+        } else {
+          console.error("Failed to update slides:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error updating slides:", error);
+      }
     }
   };
 
-  // 返回仪表板
   const handleBack = () => {
     navigate('/dashboard');
   };
@@ -31,8 +49,6 @@ function EditSlides({ slides, setSlides }) {
 
       <button onClick={handleBack}>Back to Dashboard</button>
       <button onClick={handleDelete}>Delete Slide</button>
-
-      {/* 这里可以添加幻灯片内容的编辑功能 */}
     </div>
   );
 }

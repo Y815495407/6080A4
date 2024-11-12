@@ -12,7 +12,6 @@ function Dashboard({ slides, setSlides }) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const token = localStorage.getItem('token'); 
 
-  // Fetch slides data from backend
   const fetchSlides = async () => {
     try {
       const response = await fetch('http://localhost:5005/store', {
@@ -33,7 +32,6 @@ function Dashboard({ slides, setSlides }) {
     }
   };
 
-  // Save slides data to backend
   const saveSlides = async (newSlides) => {
     try {
       const response = await fetch('http://localhost:5005/store', {
