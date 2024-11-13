@@ -10,40 +10,62 @@ function EditSlides({ slides, setSlides }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState(slideDeck?.name || '');
   const slideRefs = useRef([]);
-  const token = localStorage.getItem('token'); 
+  const token = localStorage.getItem('token');
 
   if (!slideDeck) {
     return <div>Slide not found.</div>;
   }
 
-  const updateSlideContent = (index, content) => {
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowLeft') {
+        goToPreviousSlide();
+      } else if (event.key === 'ArrowRight') {
+        goToNextSlide();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentSlideIndex]);
+
+  const updateSlideContent = (content) => {
     const updatedSlides = [...slides];
-    updatedSlides[id].slides[index].content = content;
+    updatedSlides[id].slides[currentSlideIndex].content = content;
     setSlides(updatedSlides);
-    saveSlidesToBackend(updatedSlides); 
-    setCurrentSlideIndex(index); 
+    saveSlidesToBackend(updatedSlides);
   };
 
   const updateTitle = (newTitle) => {
     const updatedSlides = [...slides];
     updatedSlides[id].name = newTitle;
     setSlides(updatedSlides);
-    saveSlidesToBackend(updatedSlides); 
+    saveSlidesToBackend(updatedSlides);
   };
 
   const goToSlide = (index) => {
     setCurrentSlideIndex(index);
-    slideRefs.current[index]?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const goToNextSlide = () => {
+    if (currentSlideIndex < slideDeck.slides.length - 1) {
+      setCurrentSlideIndex(currentSlideIndex + 1);
+    }
+  };
+
+  const goToPreviousSlide = () => {
+    if (currentSlideIndex > 0) {
+      setCurrentSlideIndex(currentSlideIndex - 1);
+    }
   };
 
   const addSlide = () => {
     const updatedSlides = [...slides];
     updatedSlides[id].slides.push({ content: '' });
     setSlides(updatedSlides);
-    const newIndex = updatedSlides[id].slides.length - 1;
-    setCurrentSlideIndex(newIndex);
-    goToSlide(newIndex);
-    saveSlidesToBackend(updatedSlides); 
+    setCurrentSlideIndex(updatedSlides[id].slides.length - 1);
+    saveSlidesToBackend(updatedSlides);
   };
 
   const deleteSlide = () => {
@@ -51,9 +73,7 @@ function EditSlides({ slides, setSlides }) {
       const updatedSlides = [...slides];
       updatedSlides[id].slides.splice(currentSlideIndex, 1);
       setSlides(updatedSlides);
-      const newIndex = currentSlideIndex > 0 ? currentSlideIndex - 1 : 0;
-      setCurrentSlideIndex(newIndex);
-      goToSlide(newIndex);
+      setCurrentSlideIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0));
       saveSlidesToBackend(updatedSlides);
     }
   };
@@ -64,12 +84,6 @@ function EditSlides({ slides, setSlides }) {
       setSlides(updatedSlides);
       saveSlidesToBackend(updatedSlides);
       navigate('/dashboard');
-    }
-  };
-
-  const handleKeyDown = (event) => {
-    if (event.key === 'Backspace' && slideDeck.slides[currentSlideIndex].content === '') {
-      deleteSlide();
     }
   };
 
@@ -133,24 +147,34 @@ function EditSlides({ slides, setSlides }) {
             </h1>
           )}
         </div>
-        <div className="slides-container">
-          {slideDeck.slides.map((slide, index) => (
-            <div
-              key={index}
-              ref={(el) => (slideRefs.current[index] = el)}
-              className={`slide-page ${index === currentSlideIndex ? 'active-slide' : ''}`}
-            >
-              <textarea
-                value={slide.content}
-                onChange={(e) => updateSlideContent(index, e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Enter slide content here..."
-                className="slide-textarea"
-                autoFocus={index === currentSlideIndex}
-              />
-            </div>
-          ))}
+
+        <div className="slide-page">
+          <textarea
+            value={slideDeck.slides[currentSlideIndex].content}
+            onChange={(e) => updateSlideContent(e.target.value)}
+            placeholder="Enter slide content here..."
+            className="slide-textarea"
+            autoFocus
+          />
         </div>
+
+        <div className="navigation-buttons">
+          <button
+            onClick={goToPreviousSlide}
+            disabled={currentSlideIndex === 0}
+            className={`nav-button ${currentSlideIndex === 0 ? 'disabled' : ''}`}
+          >
+            ⬅️ Previous
+          </button>
+          <button
+            onClick={goToNextSlide}
+            disabled={currentSlideIndex === slideDeck.slides.length - 1}
+            className={`nav-button ${currentSlideIndex === slideDeck.slides.length - 1 ? 'disabled' : ''}`}
+          >
+            Next ➡️
+          </button>
+        </div>
+
         <button onClick={() => navigate('/dashboard')} className="back-to-dashboard-button">Back to Dashboard</button>
         <button onClick={deleteSlideDeck} className="delete-slide-deck-button">Delete Slide Deck</button>
       </div>

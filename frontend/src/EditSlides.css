@@ -38,12 +38,6 @@
   position: relative;
 }
 
-.thumbnail-content {
-  width: 600px;
-  height: 400px;
-  font-size: 10px;
-}
-
 .slides-editor {
   flex: 1;
   padding: 20px;
@@ -51,13 +45,12 @@
 }
 
 .slide-page {
-  width: 600px;
-  height: 400px;
+  width: 630px;
+  height: 430px;
   padding: 10px;
   border: 1px solid #ddd;
   background-color: white;
   border-radius: 5px;
-  overflow: hidden;
   margin-bottom: 20px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -67,8 +60,8 @@
 }
 
 .slide-textarea {
-  width: 100%;
-  height: 100%;
+  width: 600px;
+  height: 400px;
   padding: 10px;
   font-size: 16px;
   border: none;
@@ -76,8 +69,29 @@
   outline: none;
 }
 
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.nav-button {
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.nav-button.disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}
+
 .back-to-dashboard-button,
-.delete-slide-button {
+.delete-slide-deck-button {
   background-color: #4CAF50;
   color: white;
   padding: 10px;
@@ -89,12 +103,5 @@
 }
 
 .delete-slide-deck-button {
-  background-color: #f10000;
-  color: white;
-  padding: 10px;
-  border: none;
-  cursor: pointer;
-  margin-top: 10px;
-  border-radius: 5px;
-  width: 100%;
-} 
+  background-color: #dc3545;
+}
