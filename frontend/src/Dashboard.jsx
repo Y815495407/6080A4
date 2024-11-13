@@ -9,8 +9,9 @@ function Dashboard({ slides, setSlides }) {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [slidesName, setSlidesName] = useState('');
+  const [thumbnail, setThumbnail] = useState('');
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const token = localStorage.getItem('token'); 
+  const token = localStorage.getItem('token');
 
   const fetchSlides = async () => {
     try {
@@ -23,7 +24,7 @@ function Dashboard({ slides, setSlides }) {
       });
 
       if (!response.ok) {
-        throw new Error('Access denied. Please check your token.');
+        throw new Error('Authorization error, please check your token');
       }
       const data = await response.json();
       setSlides(data.store.slides || []);
@@ -45,7 +46,7 @@ function Dashboard({ slides, setSlides }) {
       });
 
       if (!response.ok) {
-        throw new Error('Access denied. Please check your token.');
+        throw new Error('Authorization error, please check your token');
       }
     } catch (error) {
       console.error('Failed to save slides:', error);
@@ -63,14 +64,15 @@ function Dashboard({ slides, setSlides }) {
   const closeModal = () => {
     setIsModalOpen(false);
     setSlidesName('');
+    setThumbnail('');
   };
 
   const createSlides = () => {
     if (slidesName.trim()) {
-      const newSlide = { 
-        name: slidesName, 
-        slides: [{ content: "Empty Slide" }],
-        thumbnail: "", 
+      const newSlide = {
+        name: slidesName,
+        slides: [{ title: "New Slide", content: "Empty Slide", thumbnail: "" }],
+        thumbnail: thumbnail || "",
         description: "This is a new slide",
       };
       const updatedSlides = [...slides, newSlide];
@@ -98,6 +100,14 @@ function Dashboard({ slides, setSlides }) {
     localStorage.removeItem('token');
     closeLogoutModal();
     navigate('/login');
+  };
+
+  const handleThumbnailChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setThumbnail(url);
+    }
   };
 
   return (
@@ -143,6 +153,7 @@ function Dashboard({ slides, setSlides }) {
           onChange={(e) => setSlidesName(e.target.value)}
           required
         />
+        <input type="file" onChange={handleThumbnailChange} />
         <button onClick={createSlides} className="create-button">Create</button>
         <button onClick={closeModal} className="cancel-button">Cancel</button>
       </Modal>
