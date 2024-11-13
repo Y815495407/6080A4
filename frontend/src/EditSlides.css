@@ -18,16 +18,22 @@
   background-color: #e0e0e0;
   border-radius: 5px;
   padding: 5px;
-  transition: background-color 0.3s;
+  transition: transform 0.3s, background-color 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.thumbnail-item:hover {
+  transform: scale(1.1);
+  background-color: #d0d0d0; 
 }
 
 .thumbnail-item.active {
   background-color: #4CAF50;
   color: white;
 }
+
 
 .thumbnail-preview {
   width: 100%;
@@ -53,6 +59,8 @@
   border-radius: 5px;
   margin-bottom: 20px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
 }
 
 .slide-page.active-slide {
@@ -69,6 +77,17 @@
   outline: none;
 }
 
+.slide-number {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    font-size: 1em;
+    color: white;
+    background-color: #4CAF50;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: bold;
+}
 .navigation-buttons {
   display: flex;
   justify-content: space-between;
@@ -106,7 +125,7 @@
   background-color: #dc3545;
 }
 
-.delete-slide-button{
+.delete-slide-button {
   color: white;
   background-color: #8b0512;
   padding: 10px;

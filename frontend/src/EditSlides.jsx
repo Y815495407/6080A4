@@ -158,6 +158,7 @@ function EditSlides({ slides, setSlides }) {
             className="slide-textarea"
             autoFocus
           />
+          <div className="slide-number">{currentSlideIndex + 1}</div>
         </div>
 
         <div className="navigation-buttons">
