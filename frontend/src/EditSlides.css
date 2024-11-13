@@ -105,3 +105,10 @@
 .delete-slide-deck-button {
   background-color: #dc3545;
 }
+
+.delete-slide-button{
+  color: white;
+  background-color: #8b0512;
+  padding: 10px;
+  border-radius: 5px;
+}

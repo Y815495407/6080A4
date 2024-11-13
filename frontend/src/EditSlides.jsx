@@ -75,6 +75,8 @@ function EditSlides({ slides, setSlides }) {
       setSlides(updatedSlides);
       setCurrentSlideIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0));
       saveSlidesToBackend(updatedSlides);
+    } else {
+      alert("Cannot delete the only slide in the deck.");
     }
   };
 
@@ -166,6 +168,7 @@ function EditSlides({ slides, setSlides }) {
           >
             ⬅️ Previous
           </button>
+          <button onClick={deleteSlide} className="delete-slide-button">Delete Current Slide</button>
           <button
             onClick={goToNextSlide}
             disabled={currentSlideIndex === slideDeck.slides.length - 1}
