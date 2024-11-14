@@ -59,7 +59,7 @@
   border-radius: 5px;
   margin-bottom: 20px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  position: relative;
+  position: relative; /* Allows positioning of child elements absolutely */
   overflow: hidden;
 }
 
