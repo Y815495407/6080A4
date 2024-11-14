@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import CustomTextBox from './CustomTextBox';
+import CustomImageBox from './CustomImageBox'; 
 import ToolBar from './ToolBar';
 import './EditSlides.css';
 
@@ -14,12 +15,13 @@ function EditSlides({ slides, setSlides }) {
     const [selectedTextBox, setSelectedTextBox] = useState(null);
     const [isToolbarVisible, setIsToolbarVisible] = useState(false);
     const nextTextBoxId = useRef(1);
+    const nextImageBoxId = useRef(1); 
     const token = localStorage.getItem('token');
 
-    const initializeTextBoxes = () => {
-        return slideDeck.slides.map(() => []);
-    };
+    const initializeTextBoxes = () => slideDeck.slides.map(() => []);
+    const initializeImageBoxes = () => slideDeck.slides.map(() => []);
     const [textBoxes, setTextBoxes] = useState(initializeTextBoxes);
+    const [imageBoxes, setImageBoxes] = useState(initializeImageBoxes);
 
     if (!slideDeck) {
         return <div>Slide not found.</div>;
@@ -41,6 +43,47 @@ function EditSlides({ slides, setSlides }) {
         });
     };
 
+    const handleImageUpload = (imageBoxId, file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const imageData = reader.result;
+            setImageBoxes((prevImageBoxes) => {
+                const updatedImageBoxes = [...prevImageBoxes];
+                updatedImageBoxes[currentSlideIndex] = updatedImageBoxes[currentSlideIndex].map((box) =>
+                    box.id === imageBoxId ? { ...box, imageUrl: imageData } : box
+                );
+                return updatedImageBoxes;
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const addImageBox = () => {
+        const newImageBox = {
+            id: nextImageBoxId.current++,
+            imageUrl: '',
+            position: { top: '10px', left: '10px' },
+            size: { width: 50, height: 50 },
+            alt: 'New Image',
+        };
+        setImageBoxes((prevImageBoxes) => {
+            const updatedImageBoxes = [...prevImageBoxes];
+            updatedImageBoxes[currentSlideIndex] = [...updatedImageBoxes[currentSlideIndex], newImageBox];
+            return updatedImageBoxes;
+        });
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageUpload(newImageBox.id, file);
+            }
+        };
+        fileInput.click();
+    };
+
     const handleAttributeChange = (attribute, value) => {
         if (selectedTextBox) {
             setTextBoxes((prevTextBoxes) => {
@@ -50,7 +93,6 @@ function EditSlides({ slides, setSlides }) {
                 );
                 return updatedTextBoxes;
             });
-
             setSelectedTextBox((prev) => ({ ...prev, [attribute]: value }));
         }
     };
@@ -74,7 +116,6 @@ function EditSlides({ slides, setSlides }) {
     };
 
     const goToSlide = (index) => setCurrentSlideIndex(index);
-
     const goToNextSlide = () => {
         if (currentSlideIndex < slideDeck.slides.length - 1) {
             setCurrentSlideIndex(currentSlideIndex + 1);
@@ -92,6 +133,7 @@ function EditSlides({ slides, setSlides }) {
         updatedSlides[id].slides.push({ content: '' });
         setSlides(updatedSlides);
         setTextBoxes([...textBoxes, []]);
+        setImageBoxes([...imageBoxes, []]);
         setCurrentSlideIndex(updatedSlides[id].slides.length - 1);
         saveSlidesToBackend(updatedSlides);
     };
@@ -101,9 +143,12 @@ function EditSlides({ slides, setSlides }) {
             const updatedSlides = [...slides];
             updatedSlides[id].slides.splice(currentSlideIndex, 1);
             const updatedTextBoxes = [...textBoxes];
+            const updatedImageBoxes = [...imageBoxes];
             updatedTextBoxes.splice(currentSlideIndex, 1);
+            updatedImageBoxes.splice(currentSlideIndex, 1);
             setSlides(updatedSlides);
             setTextBoxes(updatedTextBoxes);
+            setImageBoxes(updatedImageBoxes);
             setCurrentSlideIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0));
             saveSlidesToBackend(updatedSlides);
         } else {
@@ -204,9 +249,20 @@ function EditSlides({ slides, setSlides }) {
                             onSelect={() => handleTextBoxSelect(box.id)}
                         />
                     ))}
+                    {imageBoxes[currentSlideIndex].map((box) => (
+                        <CustomImageBox
+                            key={box.id}
+                            id={box.id}
+                            imageUrl={box.imageUrl}
+                            position={box.position}
+                            size={box.size}
+                            alt={box.alt}
+                        />
+                    ))}
                 </div>
 
                 <button onClick={addTextBox} className="add-textbox-button">Add Text Box</button>
+                <button onClick={addImageBox} className="add-imagebox-button">Add Image</button>
 
                 <div className="navigation-buttons">
                     <button
