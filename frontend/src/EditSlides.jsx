@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import CustomTextBox from './CustomTextBox';
-import CustomImageBox from './CustomImageBox'; 
+import CustomImageBox from './CustomImageBox';
+import CustomVideoBox from './CustomVideoBox';
 import ToolBar from './ToolBar';
 import './EditSlides.css';
 
@@ -15,13 +16,21 @@ function EditSlides({ slides, setSlides }) {
     const [selectedTextBox, setSelectedTextBox] = useState(null);
     const [isToolbarVisible, setIsToolbarVisible] = useState(false);
     const nextTextBoxId = useRef(1);
-    const nextImageBoxId = useRef(1); 
+    const nextImageBoxId = useRef(1);
+    const nextVideoBoxId = useRef(1); 
     const token = localStorage.getItem('token');
+    const [videoModalOpen, setVideoModalOpen] = useState(false);
+    const [videoSourceType, setVideoSourceType] = useState('url');
+    const [videoUrl, setVideoUrl] = useState('');
+    const [videoFile, setVideoFile] = useState(null);
+    const [autoplay, setAutoplay] = useState(false);
 
     const initializeTextBoxes = () => slideDeck.slides.map(() => []);
     const initializeImageBoxes = () => slideDeck.slides.map(() => []);
+    const initializeVideoBoxes = () => slideDeck.slides.map(() => []);
     const [textBoxes, setTextBoxes] = useState(initializeTextBoxes);
     const [imageBoxes, setImageBoxes] = useState(initializeImageBoxes);
+    const [videoBoxes, setVideoBoxes] = useState(initializeVideoBoxes);
 
     if (!slideDeck) {
         return <div>Slide not found.</div>;
@@ -84,6 +93,38 @@ function EditSlides({ slides, setSlides }) {
         fileInput.click();
     };
 
+    const openVideoModal = () => {
+        setVideoModalOpen(true);
+    };
+
+    const handleAddVideo = () => {
+        const newVideoBox = {
+            id: nextVideoBoxId.current++,
+            videoUrl: videoSourceType === 'url' ? videoUrl : null,
+            videoFile: videoSourceType === 'file' ? videoFile : null,
+            autoplay,
+            position: { top: '10px', left: '10px' },
+            size: { width: 50, height: 30 },
+        };
+        setVideoBoxes((prevVideoBoxes) => {
+            const updatedVideoBoxes = [...prevVideoBoxes];
+            updatedVideoBoxes[currentSlideIndex] = [...updatedVideoBoxes[currentSlideIndex], newVideoBox];
+            return updatedVideoBoxes;
+        });
+        setVideoModalOpen(false);
+        setVideoUrl('');
+        setVideoFile(null);
+        setAutoplay(false);
+    };
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setVideoFile(file);
+            setVideoSourceType('file');
+        }
+    };
+
     const handleAttributeChange = (attribute, value) => {
         if (selectedTextBox) {
             setTextBoxes((prevTextBoxes) => {
@@ -116,6 +157,7 @@ function EditSlides({ slides, setSlides }) {
     };
 
     const goToSlide = (index) => setCurrentSlideIndex(index);
+
     const goToNextSlide = () => {
         if (currentSlideIndex < slideDeck.slides.length - 1) {
             setCurrentSlideIndex(currentSlideIndex + 1);
@@ -134,6 +176,7 @@ function EditSlides({ slides, setSlides }) {
         setSlides(updatedSlides);
         setTextBoxes([...textBoxes, []]);
         setImageBoxes([...imageBoxes, []]);
+        setVideoBoxes([...videoBoxes, []]);
         setCurrentSlideIndex(updatedSlides[id].slides.length - 1);
         saveSlidesToBackend(updatedSlides);
     };
@@ -144,11 +187,14 @@ function EditSlides({ slides, setSlides }) {
             updatedSlides[id].slides.splice(currentSlideIndex, 1);
             const updatedTextBoxes = [...textBoxes];
             const updatedImageBoxes = [...imageBoxes];
+            const updatedVideoBoxes = [...videoBoxes];
             updatedTextBoxes.splice(currentSlideIndex, 1);
             updatedImageBoxes.splice(currentSlideIndex, 1);
+            updatedVideoBoxes.splice(currentSlideIndex, 1);
             setSlides(updatedSlides);
             setTextBoxes(updatedTextBoxes);
             setImageBoxes(updatedImageBoxes);
+            setVideoBoxes(updatedVideoBoxes);
             setCurrentSlideIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0));
             saveSlidesToBackend(updatedSlides);
         } else {
@@ -259,10 +305,22 @@ function EditSlides({ slides, setSlides }) {
                             alt={box.alt}
                         />
                     ))}
+                    {videoBoxes[currentSlideIndex].map((box) => (
+                        <CustomVideoBox
+                            key={box.id}
+                            id={box.id}
+                            videoUrl={box.videoUrl}
+                            videoFile={box.videoFile}
+                            position={box.position}
+                            size={box.size}
+                            autoplay={box.autoplay}
+                        />
+                    ))}
                 </div>
 
                 <button onClick={addTextBox} className="add-textbox-button">Add Text Box</button>
                 <button onClick={addImageBox} className="add-imagebox-button">Add Image</button>
+                <button onClick={openVideoModal} className="add-videobox-button">Add Video</button>
 
                 <div className="navigation-buttons">
                     <button
@@ -285,6 +343,42 @@ function EditSlides({ slides, setSlides }) {
                 <button onClick={() => navigate('/dashboard')} className="back-to-dashboard-button">Back to Dashboard</button>
                 <button onClick={deleteSlideDeck} className="delete-slide-deck-button">Delete Slide Deck</button>
             </div>
+
+            {videoModalOpen && (
+                <div className="modal-overlay" onClick={() => setVideoModalOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>Add Video</h3>
+                        <label>
+                            Source Type:
+                            <select value={videoSourceType} onChange={(e) => setVideoSourceType(e.target.value)}>
+                                <option value="url">URL</option>
+                                <option value="file">File Upload</option>
+                            </select>
+                        </label>
+                        {videoSourceType === 'url' ? (
+                            <label>
+                                Video URL:
+                                <input type="text" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
+                            </label>
+                        ) : (
+                            <label>
+                                Video File:
+                                <input type="file" accept="video/*" onChange={handleFileUpload} />
+                            </label>
+                        )}
+                        <label>
+                            Autoplay:
+                            <input
+                                type="checkbox"
+                                checked={autoplay}
+                                onChange={(e) => setAutoplay(e.target.checked)}
+                            />
+                        </label>
+                        <button onClick={handleAddVideo}>Add Video</button>
+                        <button onClick={() => setVideoModalOpen(false)}>Cancel</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
