@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import './CustomTextBox.css';
 import ToolBar from './ToolBar';
 
-function CustomTextBox({ id, content, position = { top: '10px', left: '10px' }, size = { width: 20, height: 10 }, color = '#000000', fontSize = 1, onContentChange, onUpdateThumbnail }) {
+function CustomTextBox({ id, content, position = { top: '10px', left: '10px' }, size = { width: 20, height: 10 }, color = '#000000', fontSize = 1, fontFamily = 'Arial', onContentChange, onUpdateThumbnail }) {
   const [text, setText] = useState(content);
   const [showSettings, setShowSettings] = useState(false);
   const [currentColor, setCurrentColor] = useState(color);
@@ -80,6 +80,7 @@ function CustomTextBox({ id, content, position = { top: '10px', left: '10px' }, 
           height: `${currentSize.height}%`,
           color: currentColor,
           fontSize: `${currentFontSize}em`,
+          fontFamily: fontFamily, // 应用传入的字体
           border: '1px solid #ccc',
           padding: '5px',
           background: 'white',
@@ -99,6 +100,7 @@ function CustomTextBox({ id, content, position = { top: '10px', left: '10px' }, 
             resize: 'none',
             fontSize: `${currentFontSize}em`,
             color: currentColor,
+            fontFamily: fontFamily, // 应用字体样式
           }}
         />
       </div>

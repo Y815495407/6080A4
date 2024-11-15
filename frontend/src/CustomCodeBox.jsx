@@ -3,7 +3,7 @@ import './CustomCodeBox.css';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 
-function CustomCodeBox({ id, code, language, position, size, fontSize, onContentChange }) {
+function CustomCodeBox({ id, code, language = 'javascript', position = { top: '10px', left: '10px' }, size = { width: 50, height: 30 }, fontSize = 1, onContentChange }) {
     const [isEditing, setIsEditing] = useState(false);
     const [currentCode, setCurrentCode] = useState(code);
     const [currentLanguage, setCurrentLanguage] = useState(language || 'javascript');
@@ -32,7 +32,7 @@ function CustomCodeBox({ id, code, language, position, size, fontSize, onContent
     };
 
     const handleSizeChange = (e) => {
-        const newSize = { ...currentSize, [e.target.name]: e.target.value };
+        const newSize = { ...currentSize, [e.target.name]: parseFloat(e.target.value) || 30 };
         setCurrentSize(newSize);
     };
 
@@ -42,7 +42,7 @@ function CustomCodeBox({ id, code, language, position, size, fontSize, onContent
                 <code
                     className={`language-${currentLanguage}`}
                     dangerouslySetInnerHTML={{
-                        __html: hljs.highlight(currentLanguage, currentCode).value,
+                        __html: hljs.highlight(currentLanguage, currentCode || '').value,
                     }}
                 />
             </pre>

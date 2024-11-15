@@ -3,22 +3,24 @@ import { useParams, useNavigate } from 'react-router-dom';
 import CustomTextBox from './CustomTextBox';
 import CustomImageBox from './CustomImageBox';
 import CustomVideoBox from './CustomVideoBox';
-import CustomCodeBox from './CustomCodeBox'; 
+import CustomCodeBox from './CustomCodeBox';
 import ToolBar from './ToolBar';
+import FontSelector from './FontSelector';
+import BackgroundSelector from './BackgroundSelector';
 import './EditSlides.css';
 
 function EditSlides({ slides, setSlides }) {
     const { id } = useParams();
     const navigate = useNavigate();
-    const slideDeck = slides[id];
+    const slideDeck = slides && slides[id] ? slides[id] : null;
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const [isEditingTitle, setIsEditingTitle] = useState(false);
-    const [title, setTitle] = useState(slideDeck?.name || '');
+    const [title, setTitle] = useState(slideDeck ? slideDeck.name : '');
     const [selectedTextBox, setSelectedTextBox] = useState(null);
     const [isToolbarVisible, setIsToolbarVisible] = useState(false);
     const nextTextBoxId = useRef(1);
     const nextImageBoxId = useRef(1);
-    const nextVideoBoxId = useRef(1); 
+    const nextVideoBoxId = useRef(1);
     const nextCodeBoxId = useRef(1);
     const token = localStorage.getItem('token');
     const [videoModalOpen, setVideoModalOpen] = useState(false);
@@ -30,43 +32,50 @@ function EditSlides({ slides, setSlides }) {
     const [codeContent, setCodeContent] = useState('');
     const [codeLanguage, setCodeLanguage] = useState('javascript');
     const [codeFontSize, setCodeFontSize] = useState(1);
+    const [selectedFont, setSelectedFont] = useState("Arial");
+    const [isBgSelectorOpen, setIsBgSelectorOpen] = useState(false);
+    const [slideBackground, setSlideBackground] = useState('#ffffff'); 
 
 
-    const initializeTextBoxes = () => slideDeck.slides.map(() => []);
-    const initializeImageBoxes = () => slideDeck.slides.map(() => []);
-    const initializeVideoBoxes = () => slideDeck.slides.map(() => []);
+    const initializeTextBoxes = () => slideDeck && slideDeck.slides ? slideDeck.slides.map(() => []) : [];
+    const initializeImageBoxes = () => slideDeck && slideDeck.slides ? slideDeck.slides.map(() => []) : [];
+    const initializeVideoBoxes = () => slideDeck && slideDeck.slides ? slideDeck.slides.map(() => []) : [];
+    const initializeCodeBoxes = () => slideDeck && slideDeck.slides ? slideDeck.slides.map(() => []) : [];
+
     const [textBoxes, setTextBoxes] = useState(initializeTextBoxes);
     const [imageBoxes, setImageBoxes] = useState(initializeImageBoxes);
     const [videoBoxes, setVideoBoxes] = useState(initializeVideoBoxes);
+    const [codeBoxes, setCodeBoxes] = useState(initializeCodeBoxes);
 
     if (!slideDeck) {
         return <div>Slide not found.</div>;
     }
 
-    const initializeCodeBoxes = () => slideDeck.slides.map(() => []); 
-    const [codeBoxes, setCodeBoxes] = useState(initializeCodeBoxes);
+    const openCodeModal = () => setIsCodeModalOpen(true);
+    const handleFontChange = (font) => setSelectedFont(font);
 
-const openCodeModal = () => setIsCodeModalOpen(true);
-
-
-const handleAddCodeBox = () => {
-    const newCodeBox = {
-        id: nextCodeBoxId.current++,
-        code: codeContent,
-        language: codeLanguage,
-        fontSize: codeFontSize,
-        position: { top: '10px', left: '10px' },
-        size: { width: 200, height: 100 },
+    const handleBackgroundChange = (background) => {
+      setSlideBackground(background);
+      setIsBgSelectorOpen(false);
+  };
+    const handleAddCodeBox = () => {
+        const newCodeBox = {
+            id: nextCodeBoxId.current++,
+            code: codeContent,
+            language: codeLanguage,
+            fontSize: codeFontSize,
+            position: { top: '10px', left: '10px' },
+            size: { width: 200, height: 100 },
+        };
+        setCodeBoxes((prevCodeBoxes) => {
+            const updatedCodeBoxes = [...prevCodeBoxes];
+            updatedCodeBoxes[currentSlideIndex] = [...updatedCodeBoxes[currentSlideIndex], newCodeBox];
+            return updatedCodeBoxes;
+        });
+        setIsCodeModalOpen(false);
+        setCodeContent('');
+        setCodeFontSize(1);
     };
-    setCodeBoxes((prevCodeBoxes) => {
-        const updatedCodeBoxes = [...prevCodeBoxes];
-        updatedCodeBoxes[currentSlideIndex] = [...updatedCodeBoxes[currentSlideIndex], newCodeBox];
-        return updatedCodeBoxes;
-    });
-    setIsCodeModalOpen(false);
-    setCodeContent('');
-    setCodeFontSize(1);
-};
 
     const addTextBox = () => {
         const newTextBox = {
@@ -203,15 +212,19 @@ const handleAddCodeBox = () => {
     };
 
     const addSlide = () => {
-        const updatedSlides = [...slides];
-        updatedSlides[id].slides.push({ content: '' });
-        setSlides(updatedSlides);
-        setTextBoxes([...textBoxes, []]);
-        setImageBoxes([...imageBoxes, []]);
-        setVideoBoxes([...videoBoxes, []]);
-        setCurrentSlideIndex(updatedSlides[id].slides.length - 1);
-        saveSlidesToBackend(updatedSlides);
-    };
+      const updatedSlides = [...slides];
+      updatedSlides[id].slides.push({ content: '', backgroundStyle: {} });
+      setSlides(updatedSlides);
+  
+      setTextBoxes((prevTextBoxes) => [...prevTextBoxes, []]);
+      setImageBoxes((prevImageBoxes) => [...prevImageBoxes, []]);
+      setVideoBoxes((prevVideoBoxes) => [...prevVideoBoxes, []]);
+      setCodeBoxes((prevCodeBoxes) => [...prevCodeBoxes, []]);
+  
+      setCurrentSlideIndex(updatedSlides[id].slides.length - 1);
+      saveSlidesToBackend(updatedSlides);
+  };
+  
 
     const deleteSlide = () => {
         if (slideDeck.slides.length > 1) {
@@ -263,13 +276,6 @@ const handleAddCodeBox = () => {
 
     return (
         <div className="edit-slides-container">
-            {isToolbarVisible && (
-                <ToolBar
-                    selectedTextBox={selectedTextBox}
-                    onAttributeChange={handleAttributeChange}
-                    onClose={handleCloseToolbar}
-                />
-            )}
 
             <div className="slide-thumbnails">
                 <h2>Slides</h2>
@@ -291,7 +297,7 @@ const handleAddCodeBox = () => {
                 <button onClick={addSlide} className="add-slide-button">Add Slide</button>
             </div>
 
-            <div className="slides-editor">
+            <div className="slides-editor" >
                 <div className="title-container">
                     {isEditingTitle ? (
                         <input
@@ -310,9 +316,29 @@ const handleAddCodeBox = () => {
                             {title} <button onClick={() => setIsEditingTitle(true)} className="edit-title-button">✏️</button>
                         </h1>
                     )}
+
                 </div>
 
-                <div className="slide-page">
+                <button onClick={() => setIsBgSelectorOpen(true)}>Set Background</button>
+
+{isBgSelectorOpen && (
+    <div className="modal-overlay" onClick={() => setIsBgSelectorOpen(false)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <BackgroundSelector onBackgroundChange={handleBackgroundChange} />
+        </div>
+    </div>
+)}
+
+                <FontSelector selectedFont={selectedFont} onFontChange={handleFontChange} />
+                    {isToolbarVisible && (
+                        <ToolBar
+                            selectedTextBox={selectedTextBox}
+                            onAttributeChange={handleAttributeChange}
+                            onClose={handleCloseToolbar}
+                        />
+                    )}
+
+                <div className="slide-page" style={{ background: slideBackground }}>
                     <div className="slide-number">Slide {currentSlideIndex + 1}</div>
                     {textBoxes[currentSlideIndex].map((box) => (
                         <CustomTextBox
@@ -323,6 +349,7 @@ const handleAddCodeBox = () => {
                             size={box.size}
                             color={box.color}
                             fontSize={box.fontSize}
+                            fontFamily={selectedFont} 
                             onContentChange={handleAttributeChange}
                             onSelect={() => handleTextBoxSelect(box.id)}
                         />
@@ -348,24 +375,23 @@ const handleAddCodeBox = () => {
                             autoplay={box.autoplay}
                         />
                     ))}
-                  {codeBoxes[currentSlideIndex].map((box) => (
-                      <CustomCodeBox
-                          key={box.id}
-                          id={box.id}
-                          code={box.code}
-                          language={box.language}
-                          fontSize={box.fontSize}
-                          size={box.size}
-                          onDoubleClick={handleOpenCodeModal} 
-                      />
-                  ))}
+                    {codeBoxes[currentSlideIndex].map((box) => (
+                        <CustomCodeBox
+                            key={box.id}
+                            id={box.id}
+                            code={box.code}
+                            language={box.language}
+                            fontSize={box.fontSize}
+                            size={box.size}
+                            onDoubleClick={openCodeModal}
+                        />
+                    ))}
                 </div>
 
                 <button onClick={addTextBox} className="add-textbox-button">Add Text Box</button>
                 <button onClick={addImageBox} className="add-imagebox-button">Add Image</button>
                 <button onClick={openVideoModal} className="add-videobox-button">Add Video</button>
                 <button onClick={openCodeModal} className="add-codebox-button">Add Code</button>
-                <button onClick={() => setIsCodeModalOpen(true)}>Add Code Block</button>
 
                 <div className="navigation-buttons">
                     <button
@@ -427,9 +453,6 @@ const handleAddCodeBox = () => {
             {isCodeModalOpen && (
                 <div className="modal-overlay" onClick={() => setIsCodeModalOpen(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="close-button" onClick={() => setIsCodeModalOpen(false)}>
-                            &times;
-                        </button>
                         <h3>Add Code Block</h3>
                         <textarea value={codeContent} onChange={(e) => setCodeContent(e.target.value)} />
                         <select value={codeLanguage} onChange={(e) => setCodeLanguage(e.target.value)}>
@@ -444,12 +467,17 @@ const handleAddCodeBox = () => {
                             min="0.5"
                             step="0.1"
                         />
-                        <button onClick={handleAddCodeBox}>Add Code</button>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+                            <button onClick={() => setIsCodeModalOpen(false)} style={{ backgroundColor: 'lightgray', padding: '8px 16px', borderRadius: '4px' }}>
+                                Cancel
+                            </button>
+                            <button onClick={handleAddCodeBox} style={{ backgroundColor: '#007bff', color: 'white', padding: '8px 16px', borderRadius: '4px' }}>
+                                Add Code
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
-
-
 
         </div>
     );

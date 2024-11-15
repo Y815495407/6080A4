@@ -1,0 +1,12 @@
+.font-selector {
+    margin: 10px;
+}
+
+.font-selector label {
+    margin-right: 8px;
+}
+
+.font-selector select {
+    padding: 4px;
+    font-size: 1em;
+}

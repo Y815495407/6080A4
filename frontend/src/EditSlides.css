@@ -164,3 +164,37 @@
   font-size: 20px;
   cursor: pointer;
 }
+
+.font-selector {
+  margin-bottom: 10px;
+}
+
+.font-selector label {
+  margin-right: 5px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.background-selector-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
