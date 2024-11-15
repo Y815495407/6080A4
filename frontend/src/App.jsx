@@ -5,6 +5,7 @@ import Login from './Login.jsx';
 import Register from './Register.jsx';
 import Dashboard from './Dashboard.jsx';
 import EditSlides from './EditSlides.jsx';
+import PreviewSlides from './PreviewSlides.jsx';
 
 function App() {
   const [slides, setSlides] = useState([]);
@@ -48,6 +49,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard slides={slides} setSlides={setSlides} />} />
         <Route path="/edit-slide/:id" element={<EditSlides slides={slides} setSlides={setSlides} />} />
+        <Route path="/preview" element={<PreviewSlides slides={slides} />} />
       </Routes>
     </Router>
   );

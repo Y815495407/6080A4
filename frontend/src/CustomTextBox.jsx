@@ -1,16 +1,49 @@
-// CustomTextBox.jsx
 import React, { useState } from 'react';
 import './CustomTextBox.css';
 import ToolBar from './ToolBar';
 
-function CustomTextBox({ id, content, position = { top: '10px', left: '10px' }, size = { width: 20, height: 10 }, color = '#000000', fontSize = 1, fontFamily = 'Arial', onContentChange, onUpdateThumbnail }) {
+function CustomTextBox({
+  id,
+  content,
+  position = { top: '10px', left: '10px' },
+  size = { width: 20, height: 10 },
+  color = '#000000',
+  fontSize = 1,
+  fontFamily = 'Arial',
+  onContentChange,
+  onUpdateThumbnail
+}) {
   const [text, setText] = useState(content);
   const [showSettings, setShowSettings] = useState(false);
   const [currentColor, setCurrentColor] = useState(color);
   const [currentFontSize, setCurrentFontSize] = useState(fontSize);
   const [currentSize, setCurrentSize] = useState(size);
+  let saveTimer;
 
-  // 更新文本框内容并触发缩略图和后端保存
+  if (!onUpdateThumbnail) {
+    throw new Error('onUpdateThumbnail 必须提供！');
+  }
+
+  const saveToBackend = async (updatedSlides) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch('http://localhost:5005/store', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ store: { slides: updatedSlides } }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save data');
+      }
+      console.log('Slides saved successfully');
+    } catch (error) {
+      console.error('Error saving slides:', error);
+    }
+  };
+
   const updateBox = () => {
     const updatedData = {
       id,
@@ -21,36 +54,28 @@ function CustomTextBox({ id, content, position = { top: '10px', left: '10px' }, 
       fontSize: currentFontSize,
     };
     onContentChange(id, text, position, currentSize, currentColor, currentFontSize);
-    saveToBackend(updatedData); // 实时保存到后端
+
+    // 获取当前 slides 的深拷贝并更新
+    const updatedSlides = JSON.parse(localStorage.getItem('slides')) || [];
+    const slideIndex = updatedSlides.findIndex(slide => slide.id === id);
+    if (slideIndex >= 0) {
+      updatedSlides[slideIndex] = updatedData;
+    } else {
+      updatedSlides.push(updatedData);
+    }
+    saveToBackend(updatedSlides); // 保存到后端
     onUpdateThumbnail(); // 更新缩略图
   };
 
-  // 保存数据到后端
-  const saveToBackend = async (data) => {
-    try {
-      const response = await fetch('http://localhost:5005/store', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ store: data }), // 将数据包装在 store 字段中
-      });
-      if (!response.ok) {
-        throw new Error('Failed to save data');
-      }
-      console.log('Data saved successfully');
-    } catch (error) {
-      console.error('Error saving data:', error);
-    }
+  const handleTextChange = (e) => {
+    setText(e.target.value);
+    onContentChange(id, e.target.value, position, currentSize, currentColor, currentFontSize);
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      updateBox();
+    }, 500);
   };
 
-  // 双击显示设置框
-  const handleDoubleClick = () => {
-    setShowSettings(true);
-  };
-
-  // 处理属性更新
   const handleAttributeChange = (attribute, value) => {
     if (attribute === 'fontSize') {
       setCurrentFontSize(value);
@@ -59,13 +84,15 @@ function CustomTextBox({ id, content, position = { top: '10px', left: '10px' }, 
     } else if (attribute === 'size') {
       setCurrentSize(value);
     }
-    updateBox(); // 每次属性更新后立即保存
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      updateBox();
+    }, 500);
   };
 
-  // 应用设置并关闭
   const handleApplySettings = () => {
     setShowSettings(false);
-    updateBox(); // 在关闭时保存设置
+    updateBox();
   };
 
   return (
@@ -80,18 +107,17 @@ function CustomTextBox({ id, content, position = { top: '10px', left: '10px' }, 
           height: `${currentSize.height}%`,
           color: currentColor,
           fontSize: `${currentFontSize}em`,
-          fontFamily: fontFamily, // 应用传入的字体
+          fontFamily: fontFamily,
           border: '1px solid #ccc',
           padding: '5px',
           background: 'white',
           overflow: 'hidden',
         }}
-        onDoubleClick={handleDoubleClick} // 双击显示设置框
+        onDoubleClick={() => setShowSettings(true)}
       >
         <textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={updateBox} // 在失去焦点时保存更新
+          onChange={handleTextChange}
           style={{
             width: '100%',
             height: '100%',
@@ -100,12 +126,10 @@ function CustomTextBox({ id, content, position = { top: '10px', left: '10px' }, 
             resize: 'none',
             fontSize: `${currentFontSize}em`,
             color: currentColor,
-            fontFamily: fontFamily, // 应用字体样式
+            fontFamily: fontFamily,
           }}
         />
       </div>
-
-      {/* 弹出ToolBar设置框 */}
       {showSettings && (
         <ToolBar
           selectedTextBox={{ fontSize: currentFontSize, color: currentColor, size: currentSize }}
